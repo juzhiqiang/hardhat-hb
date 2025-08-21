@@ -1,9 +1,5 @@
-require("@nomicfoundation/hardhat-ethers");
-require("@nomicfoundation/hardhat-chai-matchers");
-require("@nomicfoundation/hardhat-network-helpers");
-require("@nomicfoundation/hardhat-verify");
-require("hardhat-gas-reporter");
-require("solidity-coverage");
+require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-ethers");
 require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -40,10 +36,5 @@ module.exports = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY || "",
-  },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: "USD",
-    gasPrice: 21,
   },
 };
