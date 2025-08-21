@@ -5,10 +5,13 @@ describe("RedPacket", function () {
     let redPacket;
     let owner;
     let addr1, addr2, addr3, addr4, addr5, addr6, addr7;
-    const TOTAL_AMOUNT = ethers.utils.parseEther("0.05");
+    let TOTAL_AMOUNT;
 
     beforeEach(async function () {
         [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7] = await ethers.getSigners();
+        
+        // 使用 ethers.parseEther 或 ethers.utils.parseEther
+        TOTAL_AMOUNT = ethers.parseEther ? ethers.parseEther("0.05") : ethers.utils.parseEther("0.05");
         
         const RedPacket = await ethers.getContractFactory("RedPacket");
         redPacket = await RedPacket.deploy();
@@ -45,7 +48,7 @@ describe("RedPacket", function () {
             
             const tx = await redPacket.connect(addr1).claimRedPacket();
             const receipt = await tx.wait();
-            const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+            const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice || receipt.gasPrice);
             
             const balanceAfter = await addr1.getBalance();
             const claimedAmount = await redPacket.claimedAmount(addr1.address);
@@ -108,9 +111,12 @@ describe("RedPacket", function () {
         });
 
         it("Should emit events correctly", async function () {
-            await expect(redPacket.connect(addr1).claimRedPacket())
+            const tx = await redPacket.connect(addr1).claimRedPacket();
+            const claimedAmount = await redPacket.claimedAmount(addr1.address);
+            
+            await expect(tx)
                 .to.emit(redPacket, "RedPacketClaimed")
-                .withArgs(addr1.address, await redPacket.claimedAmount(addr1.address));
+                .withArgs(addr1.address, claimedAmount);
         });
     });
 
@@ -126,7 +132,7 @@ describe("RedPacket", function () {
 
     describe("Owner Functions", function () {
         it("Should allow owner to deposit more ETH", async function () {
-            const additionalAmount = ethers.utils.parseEther("0.01");
+            const additionalAmount = ethers.parseEther ? ethers.parseEther("0.01") : ethers.utils.parseEther("0.01");
             
             await redPacket.connect(owner).deposit({ value: additionalAmount });
             
@@ -145,15 +151,16 @@ describe("RedPacket", function () {
             await redPacket.connect(addr6).claimRedPacket();
             
             // 向合约发送一些额外的ETH
+            const additionalAmount = ethers.parseEther ? ethers.parseEther("0.01") : ethers.utils.parseEther("0.01");
             await owner.sendTransaction({
                 to: redPacket.address,
-                value: ethers.utils.parseEther("0.01")
+                value: additionalAmount
             });
             
             const ownerBalanceBefore = await owner.getBalance();
             const tx = await redPacket.connect(owner).emergencyWithdraw();
             const receipt = await tx.wait();
-            const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+            const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice || receipt.gasPrice);
             
             const ownerBalanceAfter = await owner.getBalance();
             
