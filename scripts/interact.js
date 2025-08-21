@@ -12,7 +12,12 @@ async function main() {
   
   const [account] = await ethers.getSigners();
   console.log("当前账户:", account.address);
-  console.log("账户余额:", ethers.utils.formatEther(await account.getBalance()), "ETH");
+  
+  // 兼容不同版本的 ethers
+  const formatEther = ethers.formatEther || ethers.utils.formatEther;
+  const parseEther = ethers.parseEther || ethers.utils.parseEther;
+  
+  console.log("账户余额:", formatEther(await account.getBalance()), "ETH");
   
   // 连接到已部署的合约
   const RedPacket = await ethers.getContractFactory("RedPacket");
@@ -23,7 +28,7 @@ async function main() {
   // 获取红包信息
   const info = await redPacket.getRedPacketInfo();
   console.log("\n红包信息:");
-  console.log("- 剩余金额:", ethers.utils.formatEther(info._remainingAmount), "ETH");
+  console.log("- 剩余金额:", formatEther(info._remainingAmount), "ETH");
   console.log("- 已领取人数:", info._claimedCount.toString());
   console.log("- 最大领取人数:", info._maxRecipients.toString());
   console.log("- 是否已完成:", info._isFinished);
@@ -34,7 +39,7 @@ async function main() {
   
   if (hasClaimed) {
     const claimedAmount = await redPacket.claimedAmount(account.address);
-    console.log("- 已领取金额:", ethers.utils.formatEther(claimedAmount), "ETH");
+    console.log("- 已领取金额:", formatEther(claimedAmount), "ETH");
   }
   
   // 显示已领取者列表
@@ -44,7 +49,7 @@ async function main() {
     for (let i = 0; i < claimers.length; i++) {
       const claimerAddress = claimers[i];
       const amount = await redPacket.claimedAmount(claimerAddress);
-      console.log(`${i + 1}. ${claimerAddress}: ${ethers.utils.formatEther(amount)} ETH`);
+      console.log(`${i + 1}. ${claimerAddress}: ${formatEther(amount)} ETH`);
     }
   }
   
@@ -61,13 +66,13 @@ async function main() {
       console.log("交易确认!");
       
       const balanceAfter = await account.getBalance();
-      const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+      const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice || receipt.gasPrice);
       const claimedAmount = await redPacket.claimedAmount(account.address);
       
       console.log("\n领取成功!");
-      console.log("- 获得金额:", ethers.utils.formatEther(claimedAmount), "ETH");
-      console.log("- Gas费用:", ethers.utils.formatEther(gasUsed), "ETH");
-      console.log("- 净收益:", ethers.utils.formatEther(claimedAmount.sub(gasUsed)), "ETH");
+      console.log("- 获得金额:", formatEther(claimedAmount), "ETH");
+      console.log("- Gas费用:", formatEther(gasUsed), "ETH");
+      console.log("- 净收益:", formatEther(claimedAmount.sub(gasUsed)), "ETH");
       
     } catch (error) {
       console.error("领取失败:", error.message);
