@@ -24,7 +24,7 @@ contract RedPacket is ReentrancyGuard, Ownable {
     event RedPacketFinished();
     
     constructor() {
-        remainingAmount = TOTAL_AMOUNT;
+        remainingAmount = 0; // 初始化为0，需要充值后才能使用
         emit RedPacketCreated(TOTAL_AMOUNT, MAX_RECIPIENTS);
     }
     
