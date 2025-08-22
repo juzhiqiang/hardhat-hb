@@ -2,7 +2,7 @@ require("dotenv").config();
 
 console.log("🔍 检查环境变量配置");
 console.log("=" .repeat(50));
-
+console.log(process.env)
 const envVars = {
   "PRIVATE_KEY": process.env.PRIVATE_KEY,
   "INFURA_PROJECT_ID": process.env.INFURA_PROJECT_ID,
