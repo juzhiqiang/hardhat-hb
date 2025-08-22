@@ -17,7 +17,7 @@ describe("RedPacket", function () {
         redPacket = await RedPacket.deploy();
         await redPacket.deployed();
         
-        // 向合约充值0.05 ETH
+        // 向合约充值0.05 ETH (使用 receive 函数)
         await owner.sendTransaction({
             to: redPacket.address,
             value: TOTAL_AMOUNT
@@ -31,7 +31,7 @@ describe("RedPacket", function () {
 
         it("Should initialize with correct values", async function () {
             const info = await redPacket.getRedPacketInfo();
-            expect(info._remainingAmount).to.equal(TOTAL_AMOUNT);
+            expect(info._remainingAmount).to.equal(TOTAL_AMOUNT); // 充值后应该等于 TOTAL_AMOUNT
             expect(info._claimedCount).to.equal(0);
             expect(info._maxRecipients).to.equal(6);
             expect(info._isFinished).to.equal(false);
@@ -118,6 +118,17 @@ describe("RedPacket", function () {
                 .to.emit(redPacket, "RedPacketClaimed")
                 .withArgs(addr1.address, claimedAmount);
         });
+
+        it("Should not allow claiming when no funds available", async function () {
+            // 部署一个新的合约但不充值
+            const RedPacket = await ethers.getContractFactory("RedPacket");
+            const emptyRedPacket = await RedPacket.deploy();
+            await emptyRedPacket.deployed();
+            
+            await expect(
+                emptyRedPacket.connect(addr1).claimRedPacket()
+            ).to.be.revertedWith("No remaining amount");
+        });
     });
 
     describe("Getters", function () {
@@ -158,18 +169,41 @@ describe("RedPacket", function () {
             });
             
             const ownerBalanceBefore = await owner.getBalance();
+            const contractBalanceBefore = await redPacket.getContractBalance();
+            
             const tx = await redPacket.connect(owner).emergencyWithdraw();
             const receipt = await tx.wait();
             const gasUsed = receipt.gasUsed.mul(receipt.effectiveGasPrice || receipt.gasPrice);
             
             const ownerBalanceAfter = await owner.getBalance();
+            const contractBalanceAfter = await redPacket.getContractBalance();
             
-            expect(ownerBalanceAfter.add(gasUsed)).to.be.gt(ownerBalanceBefore);
+            // 验证合约余额为0
+            expect(contractBalanceAfter).to.equal(0);
+            
+            // 验证owner收到了额外的ETH（减去gas费用）
+            expect(ownerBalanceAfter).to.equal(
+                ownerBalanceBefore.add(contractBalanceBefore).sub(gasUsed)
+            );
         });
 
         it("Should not allow non-owner to withdraw", async function () {
             await expect(
                 redPacket.connect(addr1).emergencyWithdraw()
+            ).to.be.revertedWith("Ownable: caller is not the owner");
+        });
+
+        it("Should not allow withdraw before completion", async function () {
+            await expect(
+                redPacket.connect(owner).emergencyWithdraw()
+            ).to.be.revertedWith("Red packet not finished yet");
+        });
+
+        it("Should not allow non-owner to deposit", async function () {
+            const additionalAmount = ethers.parseEther ? ethers.parseEther("0.01") : ethers.utils.parseEther("0.01");
+            
+            await expect(
+                redPacket.connect(addr1).deposit({ value: additionalAmount })
             ).to.be.revertedWith("Ownable: caller is not the owner");
         });
     });
