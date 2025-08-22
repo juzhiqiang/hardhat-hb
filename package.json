@@ -10,6 +10,7 @@
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
     "deploy:mainnet": "hardhat run scripts/deploy.js --network mainnet",
     "interact": "hardhat run scripts/interact.js --network localhost",
+    "verify": "hardhat run scripts/verify-balance.js --network localhost",
     "node": "hardhat node",
     "clean": "hardhat clean"
   },
