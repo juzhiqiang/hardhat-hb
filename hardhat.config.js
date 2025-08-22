@@ -2,30 +2,28 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
 require("dotenv").config();
 
-// 检查环境变量
-function checkEnvVar(name, value) {
-  if (!value || value === "") {
-    console.error(`❌ 环境变量 ${name} 未设置或为空`);
-    console.error(`请在 .env 文件中设置 ${name}`);
-    process.exit(1);
+// 临时测试配置 - 仅用于调试
+const TEMP_PRIVATE_KEY = ""; // 临时填入你的私钥进行测试
+const TEMP_INFURA_ID = "";   // 临时填入你的Infura项目ID
+
+// 检查环境变量函数
+function getEnvVar(name, fallback = "") {
+  const value = process.env[name] || fallback;
+  if (!value && name !== "ETHERSCAN_API_KEY") {
+    console.log(`⚠️  环境变量 ${name} 未设置，使用临时配置`);
   }
+  return value;
 }
 
-// 验证必需的环境变量
-if (process.env.NODE_ENV !== "test") {
-  // 只在非测试环境下检查
-  const requiredForSepolia = process.argv.includes("sepolia");
-  const requiredForMainnet = process.argv.includes("mainnet");
-  
-  if (requiredForSepolia) {
-    checkEnvVar("INFURA_PROJECT_ID", process.env.INFURA_PROJECT_ID);
-    checkEnvVar("PRIVATE_KEY", process.env.PRIVATE_KEY);
-  }
-  
-  if (requiredForMainnet) {
-    checkEnvVar("INFURA_PROJECT_ID", process.env.INFURA_PROJECT_ID);
-    checkEnvVar("PRIVATE_KEY", process.env.PRIVATE_KEY);
-  }
+// 构建配置
+const privateKey = getEnvVar("PRIVATE_KEY", TEMP_PRIVATE_KEY);
+const infuraId = getEnvVar("INFURA_PROJECT_ID", TEMP_INFURA_ID);
+
+if (!privateKey || !infuraId) {
+  console.error("❌ 缺少必要配置:");
+  console.error("1. 检查 .env 文件是否存在");
+  console.error("2. 或者在 hardhat.config.js 中临时设置 TEMP_PRIVATE_KEY 和 TEMP_INFURA_ID");
+  console.error("3. 运行 'node scripts/check-env.js' 检查配置");
 }
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -49,24 +47,20 @@ module.exports = {
     },
     // Sepolia测试网络
     sepolia: {
-      url: process.env.INFURA_PROJECT_ID 
-        ? `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}` 
-        : "",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      url: infuraId ? `https://sepolia.infura.io/v3/${infuraId}` : "",
+      accounts: privateKey ? [privateKey] : [],
       chainId: 11155111,
       gas: 2100000,
       gasPrice: 8000000000, // 8 gwei
     },
     // 主网
     mainnet: {
-      url: process.env.INFURA_PROJECT_ID 
-        ? `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}` 
-        : "",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      url: infuraId ? `https://mainnet.infura.io/v3/${infuraId}` : "",
+      accounts: privateKey ? [privateKey] : [],
       chainId: 1,
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY || "",
+    apiKey: getEnvVar("ETHERSCAN_API_KEY"),
   },
 };
