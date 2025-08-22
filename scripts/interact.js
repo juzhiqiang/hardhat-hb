@@ -2,10 +2,10 @@ const hre = require("hardhat");
 const { ethers } = require("hardhat");
 
 // 请在这里填入已部署的合约地址
-const CONTRACT_ADDRESS = "your_deployed_contract_address_here";
+const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 async function main() {
-  if (CONTRACT_ADDRESS === "your_deployed_contract_address_here") {
+  if (!CONTRACT_ADDRESS) {
     console.log("请先在脚本中填入合约地址!");
     console.log("部署合约后，将合约地址复制到 CONTRACT_ADDRESS 变量中");
     return;
