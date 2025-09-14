@@ -1,5 +1,5 @@
-require("@nomiclabs/hardhat-waffle");
-require("@nomiclabs/hardhat-ethers");
+require("@nomicfoundation/hardhat-toolbox");
+require("@typechain/hardhat");
 require("dotenv").config();
 
 // 免费公共RPC节点
@@ -18,12 +18,12 @@ function getSepoliaUrl() {
   if (process.env.SEPOLIA_URL) {
     return process.env.SEPOLIA_URL;
   }
-  
+
   // 如果有Infura项目ID，构建Infura URL
   if (process.env.INFURA_PROJECT_ID) {
     return `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`;
   }
-  
+
   // 使用免费公共节点
   console.log("💡 使用免费公共RPC节点");
   return FREE_RPC_URLS.sepolia[0];
@@ -47,6 +47,10 @@ module.exports = {
         runs: 200,
       },
     },
+  },
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v6",
   },
   networks: {
     hardhat: {
